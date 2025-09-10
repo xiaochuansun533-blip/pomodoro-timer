@@ -1,0 +1,108 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>番茄钟</title>
+        <style>
+            * {
+                background-color: pink;
+            }
+            #screen {
+                font-size: 64px;
+                font-weight: 700;
+                margin: 24px;
+            }
+            #btn1,#btn2 {
+                background-color: black;
+                color: white;
+                font-size: 18px;
+                padding: 10px 16px;
+                border-radius: 10px;
+                border: none;
+                cursor: pointer;
+            }
+            #btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="screen">25:00</div>
+        <button id="btn1">开始</button>
+        <button id="btn2">休息</button>
+        <script>
+            let screen = document.getElementById("screen");
+            let button1 = document.getElementById("btn1");
+            let button2 =  document.getElementById("btn2");
+
+            function playBeep() 
+            {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = "sine";              // 正弦波
+                osc.frequency.value = 880;      // 频率（Hz）
+                gain.gain.setValueAtTime(0.001, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+                osc.stop(ctx.currentTime + 0.65);
+            }
+
+            function format(s)
+            {
+                let min=Math.floor(s/60);
+                let second=s%60;
+                let minstr=String(min).padStart(2,"0")
+                let secstr=String(second).padStart(2,"0");
+
+                return minstr+":"+secstr;
+            }
+            let timerID=null;
+
+            function startCountdown(seconds) 
+            {
+
+                if(timerID)
+                {
+                    clearInterval(timerID);
+                }
+                screen.textContent=format(seconds);
+                let now=seconds;
+                setInterval(()=>
+                {
+                    if(now>0)
+                    {
+                        now-=1;
+                        screen.textContent=format(now);
+                    }
+                    else if(now===0)
+                    {
+                        clearInterval(timerID);
+                        screen.textContent="00:00"
+                        playBeep();
+                        button1.disabled=false;
+                        button2.disabled=false;
+                    }
+
+                },1000);                
+            }
+
+            button1.addEventListener("click", () => 
+            {
+                startCountdown(25 * 60); // 25分钟 = 1500秒
+                button1.disabled=true;
+                button2.disabled=true;
+            });
+
+            button2.addEventListener("click", () => 
+            {
+                startCountdown(5 * 60);
+                button1.disabled=true;
+                button2.disabled=true; 
+            }); 
+        </script>
+    </body>
+</html>
